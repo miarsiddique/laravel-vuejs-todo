@@ -3,29 +3,42 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use GuzzleHttp;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
+        $client = new \GuzzleHttp\Client();
+
         $formData = [
             'form_params' => [
-                'grant_type' => 'password',
-                'client_id' => 2,
-                'client_secret' => 'euF4MGHGXTLW4ak1GdI7GDR8fwDZaq26tUciWyG4',
-                'username' => $request->username,
-                'password' => $request->password,
-            ],
+                    'grant_type' => 'password',
+                    'client_id' => 2,
+                    'client_secret' => 'UCOvQtVZWBpQ1qCdcEEF3FLhTpxUU8KAb7bU7non',
+                    'username' => $request->username,
+                    'password' => $request->password,
+                ]
         ];
 
-        $http = new \GuzzleHttp\Client;
+        $headers = [
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-type' => 'application/json'
+            ]
+        ];
 
         try{
-            $response = $http->post('localhost:8002/oauth/token', $formData);
+
+            $response = $client->request('POST', 'http://01a5c73e.ngrok.io/oauth/token', $headers, $formData);
+
+            \Log::info($response);
             return $response->getBody();
 
         }catch(\GuzzleHttp\Exception\BadResponseException $e) {
-            if($e->getCode() == 400) {
+            if($e->getCode() === 400) {
                 return response()->json('Invalid Request', $e->getCode());
             } else if($e->getCode() === 401) {
                 return response()->json('Your enter data is incorrect', $e->getCode());
@@ -33,5 +46,29 @@ class AuthController extends Controller
 
             return response()->json('somthing went wrong', $e->getCode());
         }
+    }
+
+    public function register(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'min:6'],
+        ]);
+
+        return \App\Models\User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+    }
+
+    public function logout()
+    {
+        auth()->user()->tokens->each(function($token, $key) {
+            $token->delete();
+        });
+
+        return response()->json('logout successfully. ');
     }
 }
