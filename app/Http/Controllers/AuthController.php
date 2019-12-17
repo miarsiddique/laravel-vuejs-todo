@@ -13,6 +13,15 @@ class AuthController extends Controller
     {
 
         try{
+
+            /* $client = new \GuzzleHttp\Client();
+            $response = $client->request('POST', 'http://localhost:8001/api/store', [
+                'form_params' => [
+                    'name' => 'krunal',
+                ]
+            ]);
+            $response = $response->getBody()->getContents(); */
+
             $client = new \GuzzleHttp\Client();
 
             $formData = [
