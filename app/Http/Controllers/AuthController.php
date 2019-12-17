@@ -11,33 +11,34 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $client = new \GuzzleHttp\Client();
-
-        $formData = [
-            'form_params' => [
-                    'grant_type' => 'password',
-                    'client_id' => 2,
-                    'client_secret' => 'UCOvQtVZWBpQ1qCdcEEF3FLhTpxUU8KAb7bU7non',
-                    'username' => $request->username,
-                    'password' => $request->password,
-                ]
-        ];
-
-        $headers = [
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-type' => 'application/json'
-            ]
-        ];
 
         try{
+            $client = new \GuzzleHttp\Client();
+
+            $formData = [
+                'form_params' => [
+                        'grant_type' => 'password',
+                        'client_id' => 2,
+                        'client_secret' => 'UCOvQtVZWBpQ1qCdcEEF3FLhTpxUU8KAb7bU7non',
+                        'username' => $request->username,
+                        'password' => $request->password,
+                    ]
+            ];
+
+            $headers = [
+                'headers' => [
+                    'Accept' => 'application/json',
+                    'Content-type' => 'application/json'
+                ]
+            ];
 
             $response = $client->request('POST', 'http://01a5c73e.ngrok.io/oauth/token', $headers, $formData);
-
+            $response = $response->getBody()->getContents();
+			$response = json_decode($response, true);
             \Log::info($response);
-            return $response->getBody();
+            return $response;
 
-        }catch(\GuzzleHttp\Exception\BadResponseException $e) {
+        }catch(\Exception $e) {
             if($e->getCode() === 400) {
                 return response()->json('Invalid Request', $e->getCode());
             } else if($e->getCode() === 401) {
