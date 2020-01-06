@@ -5,49 +5,39 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use GuzzleHttp;
+use App\Core\ClientGuzzul;
+use DB;
+
 
 class AuthController extends Controller
 {
+    protected $client;
+
+    public function __construct(ClientGuzzul $client)
+    {
+        $this->client = $client;
+    }
+
     public function login(Request $request)
     {
-
         try{
 
-            /* $client = new \GuzzleHttp\Client();
-            $response = $client->request('POST', 'http://localhost:8001/api/store', [
-                'form_params' => [
-                    'name' => 'krunal',
-                ]
+            $id = DB::table('oauth_clients')->where('id' , 7)->first()->id;
+            $secret = DB::table('oauth_clients')->where('id' , 7)->first()->secret;
+
+            $response = $this->client->post('oauth/token', [
+                'grant_type' => 'password',
+                'client_id' => $id,
+                'client_secret' => $secret,
+                'username' => $request->username,
+                'password' => $request->password,
+                'scope' => '*'
             ]);
-            $response = $response->getBody()->getContents(); */
 
-            $client = new \GuzzleHttp\Client();
-
-            $formData = [
-                'form_params' => [
-                        'grant_type' => 'password',
-                        'client_id' => 2,
-                        'client_secret' => 'UCOvQtVZWBpQ1qCdcEEF3FLhTpxUU8KAb7bU7non',
-                        'username' => $request->username,
-                        'password' => $request->password,
-                    ]
-            ];
-
-            $headers = [
-                'headers' => [
-                    'Accept' => 'application/json',
-                    'Content-type' => 'application/json'
-                ]
-            ];
-
-            $response = $client->request('POST', 'http://01a5c73e.ngrok.io/oauth/token', $headers, $formData);
-            $response = $response->getBody()->getContents();
-			$response = json_decode($response, true);
-            \Log::info($response);
             return $response;
 
         }catch(\Exception $e) {
+            \Log::info($e->getMessage());
             if($e->getCode() === 400) {
                 return response()->json('Invalid Request', $e->getCode());
             } else if($e->getCode() === 401) {
